@@ -30,4 +30,21 @@ public abstract class BaseScreenAdapter {
      */
     public abstract View getMenuView(int position, ViewGroup parent);
 
+    /**
+     * 打开回调，如果在打开的状态下，切换其它tab，就会还是打开状态
+     * @param previousTabView 之前点击的tabView
+     * @param currentTabView 当前点击的tabView
+     * @param currentPosition 当前位置
+     */
+    public void openMenu(View previousTabView,View currentTabView,int currentPosition){
+
+    }
+
+    /**
+     * 关闭回调，关闭后当前tabView状态处理
+     * @param tabView
+     * @param currentPosition
+     */
+    public void closeMenu(View tabView,int currentPosition){}
+
 }
