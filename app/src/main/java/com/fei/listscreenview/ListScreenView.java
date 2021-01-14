@@ -3,7 +3,6 @@ package com.fei.listscreenview;
 import android.content.Context;
 import android.graphics.Color;
 import android.util.AttributeSet;
-import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
@@ -36,6 +35,8 @@ public class ListScreenView extends LinearLayout {
     private Context mContext;
     //阴影颜色
     private int mContentParentBgColor = Color.parseColor("#88000000");
+    //移动高度
+    private int mTranslateY;
 
     public ListScreenView(Context context) {
         this(context, null);
@@ -91,6 +92,9 @@ public class ListScreenView extends LinearLayout {
             ViewGroup.LayoutParams layoutParams = mContentView.getLayoutParams();
             layoutParams.height = (int) (measuredHeight * 0.7f);
             mContentView.setLayoutParams(layoutParams);
+            mTranslateY = layoutParams.height;
+            //移出画面
+            mContentParentView.setVisibility(GONE);
         }
     }
 
@@ -102,10 +106,29 @@ public class ListScreenView extends LinearLayout {
         for (int i = 0; i < adapter.getCount(); i++) {
             //获取自定义tabView
             View tabView = adapter.getTabView(i, mTabParentView);
-            LinearLayout.LayoutParams layoutParams = (LayoutParams) tabView.getLayoutParams();
-            layoutParams.width = 0;
-            layoutParams.weight = 1;
-            mTabParentView.addView(tabView, layoutParams);
+            if (tabView != null) {
+                LinearLayout.LayoutParams layoutParams = (LayoutParams) tabView.getLayoutParams();
+                layoutParams.width = 0;
+                layoutParams.weight = 1;
+                mTabParentView.addView(tabView, layoutParams);
+                setTabViewClickListener(i,tabView);
+            }
+            //获取自定义内容menuView
+            View menuView = adapter.getMenuView(i, mContentView);
+            if (menuView != null) {
+                //先隐藏
+                menuView.setVisibility(GONE);
+                mContentView.addView(menuView);
+            }
         }
+    }
+
+    /**
+     * 设置头部点击事件
+     * @param position
+     * @param tabView
+     */
+    private void setTabViewClickListener(int position, View tabView) {
+
     }
 }
