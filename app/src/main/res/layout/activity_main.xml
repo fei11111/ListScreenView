@@ -13,6 +13,7 @@
         android:layout_centerInParent="true"/>
 
     <com.fei.listscreenview.ListScreenView
+        android:id="@+id/list_screen_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 

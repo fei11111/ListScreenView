@@ -3,6 +3,7 @@ package com.fei.listscreenview;
 import android.content.Context;
 import android.graphics.Color;
 import android.util.AttributeSet;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
@@ -50,6 +51,7 @@ public class ListScreenView extends LinearLayout {
         //可以增加头部背景颜色，内容背景颜色，阴影颜色
 
         mContext = context;
+        //初始化子View
         initChild();
     }
 
@@ -89,6 +91,21 @@ public class ListScreenView extends LinearLayout {
             ViewGroup.LayoutParams layoutParams = mContentView.getLayoutParams();
             layoutParams.height = (int) (measuredHeight * 0.7f);
             mContentView.setLayoutParams(layoutParams);
+        }
+    }
+
+    /**
+     * 设置适配器
+     */
+    public void setAdapter(BaseScreenAdapter adapter) {
+        this.mAdapter = adapter;
+        for (int i = 0; i < adapter.getCount(); i++) {
+            //获取自定义tabView
+            View tabView = adapter.getTabView(i, mTabParentView);
+            LinearLayout.LayoutParams layoutParams = (LayoutParams) tabView.getLayoutParams();
+            layoutParams.width = 0;
+            layoutParams.weight = 1;
+            mTabParentView.addView(tabView, layoutParams);
         }
     }
 }
