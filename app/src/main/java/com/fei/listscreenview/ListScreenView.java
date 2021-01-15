@@ -1,5 +1,10 @@
 package com.fei.listscreenview;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Color;
 import android.util.AttributeSet;
@@ -35,8 +40,14 @@ public class ListScreenView extends LinearLayout {
     private Context mContext;
     //阴影颜色
     private int mContentParentBgColor = Color.parseColor("#88000000");
-    //移动高度
-    private int mTranslateY;
+    //当前打开的位置
+    private int mCurrentOpenPosition = -1;
+    //动画时长
+    private int mDuration = 350;
+    //内容栏高度
+    private int mMenuParentHeight;
+    // 动画是否在执行
+    private boolean mAnimatorExecute;
 
     public ListScreenView(Context context) {
         this(context, null);
@@ -80,6 +91,12 @@ public class ListScreenView extends LinearLayout {
         params.weight = 1;
         //将阴影添加入内容父布局
         mContentParentView.addView(mShadowView, params);
+        mShadowView.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                closeMenu(mCurrentOpenPosition, mTabParentView.getChildAt(mCurrentOpenPosition));
+            }
+        });
     }
 
     @Override
@@ -92,9 +109,9 @@ public class ListScreenView extends LinearLayout {
             ViewGroup.LayoutParams layoutParams = mContentView.getLayoutParams();
             layoutParams.height = (int) (measuredHeight * 0.7f);
             mContentView.setLayoutParams(layoutParams);
-            mTranslateY = layoutParams.height;
             //移出画面
             mContentParentView.setVisibility(GONE);
+            mMenuParentHeight = mContentParentView.getMeasuredHeight();
         }
     }
 
@@ -111,7 +128,7 @@ public class ListScreenView extends LinearLayout {
                 layoutParams.width = 0;
                 layoutParams.weight = 1;
                 mTabParentView.addView(tabView, layoutParams);
-                setTabViewClickListener(i,tabView);
+                setTabViewClickListener(i, tabView);
             }
             //获取自定义内容menuView
             View menuView = adapter.getMenuView(i, mContentView);
@@ -125,10 +142,117 @@ public class ListScreenView extends LinearLayout {
 
     /**
      * 设置头部点击事件
+     *
      * @param position
      * @param tabView
      */
-    private void setTabViewClickListener(int position, View tabView) {
+    private void setTabViewClickListener(final int position, final View tabView) {
+        tabView.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //判断是否已经打开
+                if (mCurrentOpenPosition != -1 && mCurrentOpenPosition != position) {
+                    //直接替换之前打开过的内容
+                    //将之前的内容隐藏，显示需要打开的位置内容
+                    mContentView.getChildAt(mCurrentOpenPosition).setVisibility(GONE);
+                    mContentView.getChildAt(position).setVisibility(VISIBLE);
+                    //回调打开
+                    mAdapter.openMenu(mTabParentView.getChildAt(mCurrentOpenPosition), mTabParentView.getChildAt(position), position);
+                    mCurrentOpenPosition = position;
+                } else if (mCurrentOpenPosition == -1) {
+                    //打开内容
+                    openMenu(position, tabView);
+                } else {
+                    //关闭内容
+                    closeMenu(position, tabView);
+                }
+            }
+        });
+    }
 
+    /**
+     * 动画关闭内容
+     *
+     * @param position
+     * @param tabView
+     */
+    private void closeMenu(final int position, final View tabView) {
+        if (mAnimatorExecute) return;
+        ValueAnimator valueAnimator = ObjectAnimator.ofFloat(mMenuParentHeight, 0);
+        ObjectAnimator alphaAnimator = ObjectAnimator.ofFloat(mContentParentView, "alpha", 1f, 0.5f);
+        valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                float height = (float) animation.getAnimatedValue();
+                ViewGroup.LayoutParams layoutParams = mContentParentView.getLayoutParams();
+                layoutParams.height = (int) height;
+                mContentParentView.setLayoutParams(layoutParams);
+            }
+        });
+        AnimatorSet animatorSet = new AnimatorSet();
+        animatorSet.setDuration(mDuration);
+        animatorSet.playTogether(valueAnimator, alphaAnimator);
+        animatorSet.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                //回调关闭
+                mAdapter.closeMenu(tabView, position);
+                mContentView.getChildAt(position).setVisibility(GONE);
+                mContentParentView.setVisibility(GONE);
+                mCurrentOpenPosition = -1;
+                mAnimatorExecute = false;
+            }
+
+            @Override
+            public void onAnimationStart(Animator animation) {
+                super.onAnimationStart(animation);
+                mAnimatorExecute = true;
+            }
+        });
+        animatorSet.start();
+    }
+
+    /**
+     * 动画打开内容
+     *
+     * @param position
+     * @param tabView
+     */
+    private void openMenu(final int position, View tabView) {
+
+        if (mAnimatorExecute) return;
+
+        //透明度和高度动画
+        ValueAnimator valueAnimator = ObjectAnimator.ofFloat(0, mMenuParentHeight);
+        ObjectAnimator alphaAnimator = ObjectAnimator.ofFloat(mContentParentView, "alpha", 0.5f, 1f);
+        valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                float height = (float) animation.getAnimatedValue();
+                ViewGroup.LayoutParams layoutParams = mContentParentView.getLayoutParams();
+                layoutParams.height = (int) height;
+                mContentParentView.setLayoutParams(layoutParams);
+            }
+        });
+        AnimatorSet animatorSet = new AnimatorSet();
+        animatorSet.setDuration(mDuration);
+        animatorSet.playTogether(valueAnimator, alphaAnimator);
+        animatorSet.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                mCurrentOpenPosition = position;
+                //回调打开
+                mAdapter.openMenu(null, mTabParentView.getChildAt(position), position);
+                mAnimatorExecute = false;
+            }
+
+            @Override
+            public void onAnimationStart(Animator animation) {
+                mAnimatorExecute = true;
+                mContentParentView.setVisibility(VISIBLE);
+                mContentView.getChildAt(position).setVisibility(VISIBLE);
+            }
+        });
+        animatorSet.start();
     }
 }

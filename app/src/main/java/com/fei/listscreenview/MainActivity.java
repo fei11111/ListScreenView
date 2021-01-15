@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -20,6 +21,10 @@ public class MainActivity extends AppCompatActivity {
         ListScreenView listScreenView = findViewById(R.id.list_screen_view);
         listScreenView.setAdapter(new ListScreenAdapter());
 
+    }
+
+    public void tvClick(View view) {
+        Toast.makeText(this, "点击底部", Toast.LENGTH_SHORT).show();
     }
 
     private class ListScreenAdapter extends BaseScreenAdapter {
@@ -38,17 +43,30 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public View getMenuView(int position, ViewGroup parent) {
-            return null;
+            TextView textView = (TextView) LayoutInflater.from(MainActivity.this).inflate(R.layout.item_tab, parent, false);
+            textView.setText(titles[position]);
+            textView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Toast.makeText(MainActivity.this, "吐司", Toast.LENGTH_SHORT).show();
+                }
+            });
+            return textView;
         }
 
         @Override
         public void openMenu(View previousTabView, View currentTabView, int currentPosition) {
             super.openMenu(previousTabView, currentTabView, currentPosition);
+            if (previousTabView != null) {
+                previousTabView.setSelected(false);
+            }
+            currentTabView.setSelected(true);
         }
 
         @Override
         public void closeMenu(View tabView, int currentPosition) {
             super.closeMenu(tabView, currentPosition);
+            tabView.setSelected(false);
         }
     }
 }
