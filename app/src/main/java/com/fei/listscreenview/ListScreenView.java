@@ -115,11 +115,26 @@ public class ListScreenView extends LinearLayout {
         }
     }
 
+    private class AdapterMenuObserver extends BaseMenuObserver {
+        @Override
+        public void closeMenu() {
+            ListScreenView.this.closeMenu(mCurrentOpenPosition, mTabParentView.getChildAt(mCurrentOpenPosition));
+        }
+    }
+
+    private AdapterMenuObserver mObserver;
+
     /**
      * 设置适配器
      */
     public void setAdapter(BaseScreenAdapter adapter) {
+
+        if (adapter != null && mObserver != null) {
+            adapter.unregisterMenuObserver(mObserver);
+        }
         this.mAdapter = adapter;
+        mObserver = new AdapterMenuObserver();
+        mAdapter.registerMenuObserver(mObserver);
         for (int i = 0; i < adapter.getCount(); i++) {
             //获取自定义tabView
             View tabView = adapter.getTabView(i, mTabParentView);

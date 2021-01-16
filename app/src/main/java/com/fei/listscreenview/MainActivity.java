@@ -51,6 +51,12 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(MainActivity.this, "吐司", Toast.LENGTH_SHORT).show();
                 }
             });
+            textView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    notifyCloseMenu();
+                }
+            });
             return textView;
         }
 
